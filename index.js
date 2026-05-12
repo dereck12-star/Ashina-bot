@@ -4,7 +4,7 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages]
 });
 
-const TOKEN = 'MTUwMzg2NDc4NTg5NTQyNDA4MQ.G-oxwz.XN4fbOm53V1T6-W8LWM3k-3erxtWvA8OBYVn2Q';
+const TOKEN = process.env.TOKEN;
 const STAFF_ROLE_ID = '1503869458589024266'; // rol que ve los tickets
 const TICKET_CATEGORY_ID = '1503807840471613631'; // categoría donde se crean los canales
 
