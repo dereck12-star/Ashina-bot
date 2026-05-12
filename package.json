@@ -1,5 +1,5 @@
 {
-  "name": "robux-shop-bot",
+  "name": "ashina-bot",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -9,4 +9,3 @@
     "discord.js": "^14.16.3"
   }
 }
-
