@@ -22,7 +22,7 @@ const CATALOGO = [
 // ── Embed del catálogo ────────────────────────────────────
 function buildCatalogoEmbed() {
   const embed = new EmbedBuilder()
-    .setTitle('💎 Catálogo de Robux')
+    .setTitle('💎 Ashina Shop — Catálogo de Robux')
     .setColor(0x1e90ff)
     .setDescription(
       '✨ **Tienes libre elección** — puedes pedir un monto personalizado.\n' +
@@ -30,7 +30,7 @@ function buildCatalogoEmbed() {
       '> ⚠️ PayPal **no** aceptado por ahora.\n\n' +
       '**💰 Precios actualizados:**'
     )
-    .setFooter({ text: 'UF Shop | Confianza y rapidez 💙' });
+    .setFooter({ text: 'Ashina Shop | Confianza y rapidez 💙' });
 
   for (const item of CATALOGO) {
     embed.addFields({
@@ -63,7 +63,7 @@ function buildTicketEmbed(user, robux, moneda) {
     )
     .setDescription('Un miembro del staff se comunicará contigo pronto. ¡No compartas contraseñas!')
     .setTimestamp()
-    .setFooter({ text: 'UF Shop | Confianza y rapidez 💙' });
+    .setFooter({ text: 'Ashina Shop | Confianza y rapidez' });
 }
 
 // ── Registrar slash commands al arrancar ──────────────────
@@ -109,6 +109,75 @@ client.once('ready', async () => {
 });
 
 // ── Manejar interacciones ─────────────────────────────────
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isChatInputCommand()) return;
+
+  // /catalogo
+  if (interaction.commandName === 'catalogo') {
+    await interaction.reply({ embeds: [buildCatalogoEmbed()] });
+  }
+
+  // /comprar
+  if (interaction.commandName === 'comprar') {
+    const robux = interaction.options.getInteger('robux');
+    const moneda = interaction.options.getString('moneda');
+    const guild = interaction.guild;
+    const user = interaction.user;
+
+    // Crear canal de ticket
+    const channel = await guild.channels.create({
+      name: `ticket-${user.username}`.toLowerCase().replace(/[^a-z0-9-]/g, ''),
+      type: ChannelType.GuildText,
+      parent: TICKET_CATEGORY_ID || null,
+      permissionOverwrites: [
+        { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
+        { id: user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+        ...(STAFF_ROLE_ID
+          ? [{ id: STAFF_ROLE_ID, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }]
+          : []),
+      ],
+    });
+
+    const cerrarBtn = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('cerrar_ticket')
+        .setLabel('🔒 Cerrar ticket')
+        .setStyle(ButtonStyle.Danger)
+    );
+
+    await channel.send({
+      content: `${user} ${STAFF_ROLE_ID ? `<@&${STAFF_ROLE_ID}>` : ''}`,
+      embeds: [buildTicketEmbed(user, robux, moneda)],
+      components: [cerrarBtn],
+    });
+
+    await interaction.reply({
+      content: `✅ Tu ticket fue creado: ${channel}`,
+      ephemeral: true,
+    });
+  }
+
+  // /cerrar
+  if (interaction.commandName === 'cerrar') {
+    const channel = interaction.channel;
+    if (!channel.name.startsWith('ticket-')) {
+      return interaction.reply({ content: '❌ Esto solo funciona en canales de ticket.', ephemeral: true });
+    }
+    await interaction.reply('🔒 Cerrando ticket en 5 segundos...');
+    setTimeout(() => channel.delete().catch(console.error), 5000);
+  }
+});
+
+// Botón cerrar dentro del ticket
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isButton()) return;
+  if (interaction.customId === 'cerrar_ticket') {
+    await interaction.reply('🔒 Cerrando ticket en 5 segundos...');
+    setTimeout(() => interaction.channel.delete().catch(console.error), 5000);
+  }
+});
+
+client.login(TOKEN);
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
